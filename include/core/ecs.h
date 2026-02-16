@@ -48,17 +48,17 @@ typedef struct {
     X(AI_CONTROL)
 
 #define COMPONENT_STORAGE_LIST(X) \
-    X(POSITION,       vec2,     position)           \
-    X(POSITION,       vec2,     prev_position)      \
-    X(VELOCITY,       vec2,     velocity)           \
-    X(VELOCITY,       vec2,     target_velocity)    \
-    X(SPRITE,         Sprite,   sprite)             \
-    X(COLLIDER,       vec2,     collider_size)      \
-    X(COLLIDER,       uint8_t,  collision_flags)    \
-    X(PLAYER_CONTROL, uint8_t,  control_flags)      \
-    X(AI_CONTROL,     uint8_t,  control_flags)      \
-    X(AI_CONTROL,     AIParams, ai_params)          \
-    X(STATS,          Stats,    stats)
+    X(POSITION,       vec2,         position)           \
+    X(POSITION,       vec2,         prev_position)      \
+    X(VELOCITY,       vec2,         velocity)           \
+    X(VELOCITY,       vec2,         target_velocity)    \
+    X(SPRITE,         Sprite,       sprite)             \
+    X(COLLIDER,       vec2,         collider_size)      \
+    X(COLLIDER,       uint8_t,      collision_flags)    \
+    X(PLAYER_CONTROL, uint8_t,      control_flags)      \
+    X(AI_CONTROL,     uint8_t,      control_flags)      \
+    X(AI_CONTROL,     AIParams,     ai_params)          \
+    X(STATS,          Stats,        stats)
 
 typedef struct {
     float x, y;
