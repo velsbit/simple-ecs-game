@@ -3,10 +3,10 @@
 #include "core/ecs.h"
 #include "core/assets.h"
 #include "core/systems.h"
+#include <stdlib.h>
 
 static Entity player;
 static Entity camera;
-static Entity ai;
 
 void game_init() {
 
@@ -28,26 +28,36 @@ void game_init() {
     stats[player].jump_force = 700.0f;
     collider_size[player] = (vec2){ 32, 48 };
 
-    // ai
-    ai = create_entity();
-    entity_mask[ai] =
-        COMPONENT_AI_CONTROL |
-        COMPONENT_POSITION |
-        COMPONENT_VELOCITY |
-        COMPONENT_STATS |
-        COMPONENT_COLLIDER;
-    position[ai] = (vec2){ 128, 144 };
-    stats[ai].move_speed = 500.0f;
-    stats[ai].jump_force = 700.0f;
-    collider_size[ai] = (vec2){ 32, 48 };
-    ai_params[ai].type = AI_FLEE_FROM_PLAYER;
-
     // camera
     camera = create_entity();
     entity_mask[camera] =
         COMPONENT_POSITION;
     position[camera].x = position[player].x + collider_size[player].x * 0.5f;
     position[camera].y = position[player].y + collider_size[player].y * 0.5f;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity bot = create_entity();
+        if (bot == INVALID_ENTITY) {
+            break;
+        }
+        entity_mask[bot] =
+            COMPONENT_AI_CONTROL |
+            COMPONENT_POSITION |
+            COMPONENT_VELOCITY |
+            COMPONENT_STATS |
+            COMPONENT_COLLIDER |
+            COMPONENT_COLOR;
+        position[bot] = (vec2){ 128, 144 };
+        stats[bot].move_speed = 500.0f;
+        stats[bot].jump_force = 700.0f;
+
+        color[bot].r = (float)(rand() % 100) * 0.01f;
+        color[bot].g = (float)(rand() % 100) * 0.01f;
+        color[bot].b = (float)(rand() % 100) * 0.01f;
+        color[bot].a = 1;
+        collider_size[bot] = (vec2){ 32, 48 };
+        ai_params[bot].type = AI_RANDOM_MOVEMENT;
+    }
 
 }
 
@@ -56,7 +66,7 @@ void game_update(float dt) {
     system_update_prev_positions();
 
     system_player_input();
-    system_ai_control(player);
+    system_ai_control(player, dt);
     system_apply_control();
 
     system_gravity(dt);

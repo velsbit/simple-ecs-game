@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAX_ENTITIES    256
+#define MAX_ENTITIES    10000
 #define INVALID_ENTITY ((Entity)-1)
 
 #define MAP_WIDTH       20
@@ -38,6 +38,14 @@ typedef struct {
     int random_direction;
 } AIParams;
 
+typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} Color;
+
+
 #define COMPONENT_TYPES_LIST(X) \
     X(POSITION)       \
     X(VELOCITY)       \
@@ -45,7 +53,8 @@ typedef struct {
     X(STATS)          \
     X(COLLIDER)       \
     X(PLAYER_CONTROL) \
-    X(AI_CONTROL)
+    X(AI_CONTROL)     \
+    X(COLOR)
 
 #define COMPONENT_STORAGE_LIST(X) \
     X(POSITION,       vec2,         position)           \
@@ -58,7 +67,8 @@ typedef struct {
     X(PLAYER_CONTROL, uint8_t,      control_flags)      \
     X(AI_CONTROL,     uint8_t,      control_flags)      \
     X(AI_CONTROL,     AIParams,     ai_params)          \
-    X(STATS,          Stats,        stats)
+    X(STATS,          Stats,        stats)              \
+    X(COLOR,          Color,        color)
 
 typedef struct {
     float x, y;

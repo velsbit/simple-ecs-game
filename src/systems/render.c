@@ -40,6 +40,15 @@ void system_render(float alpha) {
     for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
         if (!HAS_COMPONENT(entity, required_mask)) continue;
 
+        float r = 1, g = 1, b = 0, a = 1;
+        if (HAS_COMPONENT(entity, COMPONENT_COLOR)) {
+            r = color[entity].r;
+            g = color[entity].g;
+            b = color[entity].b;
+            a = color[entity].a;
+        }
+
+
         float world_x = prev_position[entity].x + (position[entity].x - prev_position[entity].x) * alpha;
         float world_y = prev_position[entity].y + (position[entity].y - prev_position[entity].y) * alpha;
 
@@ -47,7 +56,7 @@ void system_render(float alpha) {
             world_x - cam_x,
             world_y - cam_y,
             collider_size[entity].x, collider_size[entity].y,
-            1, 1, 0, 1
+            r, g, b, a
         );
     }
 }

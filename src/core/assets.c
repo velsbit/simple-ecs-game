@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_ASSETS 256
+#define MAX_ASSETS 100000
 
 static void *storage[MAX_ASSETS] = { NULL };
 static uint32_t texture_count = 0;
