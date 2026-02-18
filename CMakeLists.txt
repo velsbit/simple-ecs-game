@@ -35,10 +35,13 @@ if(APPLE)
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.lunadecay.mygame"
         MACOSX_BUNDLE_BUNDLE_NAME "MyGame"
     )
-elseif(WIN32)
-    add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
 else()
     add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
+    if(WIN32)
+        set_target_properties(${PROJECT_NAME} PROPERTIES 
+            WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>
+        )
+    endif()
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE include)
