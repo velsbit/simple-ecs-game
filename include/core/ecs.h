@@ -4,12 +4,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAX_ENTITIES    10000
+#define MAX_ENTITIES    30000
 #define INVALID_ENTITY ((Entity)-1)
 
-#define MAP_WIDTH       20
+#define MAP_WIDTH       40
 #define MAP_HEIGHT      15
 #define TILE_SIZE       32
+
+#define COLLISION_EPSILON 0.001f
 
 typedef uint32_t Entity;
 typedef uint32_t ComponentMask;

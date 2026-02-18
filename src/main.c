@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
         game_render(time_get_state()->alpha);
 
         window_present();
-        time_update_end(240);
+        time_update_end(1000);
     }
 
     assets_shutdown();

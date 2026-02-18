@@ -55,11 +55,6 @@ void system_update_prev_positions() {
     }
 }
 
-bool is_tile_solid(int tx, int ty) {
-    if (tx < 0 || tx >= MAP_WIDTH || ty < 0 || ty >= MAP_HEIGHT) return true;
-    return world_map.data[ty][tx] > 0;
-}
-
 void system_gravity(float dt) {
     const float gravity = 1500.0f;
     const float terminal_velocity = 800.0f;
@@ -104,10 +99,22 @@ void system_position_update(float dt) {
     }
 }
 
+bool is_tile_solid(int tx, int ty) {
+    if (ty >= MAP_HEIGHT) return true;
+    if (ty < 0) return false;
+
+    int wrapped_tx = (tx % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
+
+    return world_map.data[ty][wrapped_tx] > 0;
+}
+
+void get_tile_range(float pos, float size, int *min_idx, int *max_idx) {
+    *min_idx = (int)floorf(pos / TILE_SIZE);
+    *max_idx = (int)floorf((pos + size - COLLISION_EPSILON) / TILE_SIZE);
+}
+
 void system_collision() {
-    uint32_t required_mask =
-        COMPONENT_POSITION |
-        COMPONENT_COLLIDER;
+    uint32_t required_mask = COMPONENT_POSITION | COMPONENT_COLLIDER;
 
     for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
         if (!HAS_COMPONENT(entity, required_mask)) continue;
@@ -117,50 +124,95 @@ void system_collision() {
         float w = collider_size[entity].x;
         float h = collider_size[entity].y;
 
-        int x_min = (int)(position[entity].x / TILE_SIZE);
-        int x_max = (int)((position[entity].x + w - 0.1f) / TILE_SIZE);
-        int y_min = (int)(prev_position[entity].y / TILE_SIZE);
-        int y_max = (int)((prev_position[entity].y + h - 0.1f) / TILE_SIZE);
+        float dx = position[entity].x - prev_position[entity].x;
+        float dy = position[entity].y - prev_position[entity].y;
 
-        for (int ty = y_min; ty <= y_max; ty++) {
-            for (int tx = x_min; tx <= x_max; tx++) {
-                if (is_tile_solid(tx, ty)) {
-                    if (position[entity].x > prev_position[entity].x) { // Столкновение справа
-                        position[entity].x = tx * TILE_SIZE - w;
+        float curr_x = prev_position[entity].x;
+        float curr_y = prev_position[entity].y;
+
+        if (fabsf(dx) > COLLISION_EPSILON) {
+            curr_x += dx;
+
+            int min_tx, max_tx, min_ty, max_ty;
+            get_tile_range(curr_x, w, &min_tx, &max_tx);
+            get_tile_range(curr_y, h, &min_ty, &max_ty);
+
+            if (dx > 0) {
+                for (int ty = min_ty; ty <= max_ty; ty++) {
+                    if (is_tile_solid(max_tx, ty)) {
+                        curr_x = max_tx * TILE_SIZE - w;
+                        dx = 0;
+                        velocity[entity].x = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_RIGHT);
+                        break;
                     }
-                    else if (position[entity].x < prev_position[entity].x) { // Столкновение слева
-                        position[entity].x = (tx + 1) * TILE_SIZE;
+                }
+            }
+            else { // Движение ВЛЕВО
+                for (int ty = min_ty; ty <= max_ty; ty++) {
+                    if (is_tile_solid(min_tx, ty)) {
+                        curr_x = (min_tx + 1) * TILE_SIZE;
+                        dx = 0;
+                        velocity[entity].x = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_LEFT);
+                        break;
                     }
-                    velocity[entity].x = 0;
-                    goto break_x;
                 }
             }
         }
-    break_x:;
 
-        x_min = (int)(position[entity].x / TILE_SIZE);
-        x_max = (int)((position[entity].x + w - 0.1f) / TILE_SIZE);
-        y_min = (int)(position[entity].y / TILE_SIZE);
-        y_max = (int)((position[entity].y + h - 0.1f) / TILE_SIZE);
+        position[entity].x = curr_x;
 
-        for (int ty = y_min; ty <= y_max; ty++) {
-            for (int tx = x_min; tx <= x_max; tx++) {
-                if (is_tile_solid(tx, ty)) {
-                    if (position[entity].y > prev_position[entity].y) { // Столкновение снизу
-                        position[entity].y = ty * TILE_SIZE - h;
+        if (fabsf(dy) > COLLISION_EPSILON) {
+            curr_y += dy;
+
+            int min_tx, max_tx, min_ty, max_ty;
+            get_tile_range(curr_x, w, &min_tx, &max_tx);
+            get_tile_range(curr_y, h, &min_ty, &max_ty);
+
+            if (dy > 0) {
+                for (int tx = min_tx; tx <= max_tx; tx++) {
+                    if (is_tile_solid(tx, max_ty)) {
+                        curr_y = max_ty * TILE_SIZE - h;
+                        dy = 0;
+                        velocity[entity].y = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_BOTTOM);
+                        break;
                     }
-                    else if (position[entity].y < prev_position[entity].y) { // Столкновение сверху
-                        position[entity].y = (ty + 1) * TILE_SIZE;
+                }
+            }
+            else {
+                for (int tx = min_tx; tx <= max_tx; tx++) {
+                    if (is_tile_solid(tx, min_ty)) {
+                        curr_y = (min_ty + 1) * TILE_SIZE;
+                        dy = 0;
+                        velocity[entity].y = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_TOP);
+                        break;
                     }
-                    velocity[entity].y = 0;
-                    goto break_y;
                 }
             }
         }
-    break_y:;
+
+        position[entity].y = curr_y;
+    }
+}
+
+void system_wrap_position() {
+    uint32_t required_mask =
+        COMPONENT_POSITION;
+    float max_width = (float)(MAP_WIDTH * TILE_SIZE - 1);
+
+    for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
+        if (!HAS_COMPONENT(entity, required_mask)) continue;
+
+        if (position[entity].x >= max_width) {
+            position[entity].x -= max_width;
+            prev_position[entity].x -= max_width;
+        }
+        else if (position[entity].x < 0) {
+            position[entity].x += max_width;
+            prev_position[entity].x += max_width;
+        }
     }
 }

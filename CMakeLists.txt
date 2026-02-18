@@ -36,7 +36,7 @@ if(APPLE)
         MACOSX_BUNDLE_BUNDLE_NAME "MyGame"
     )
 elseif(WIN32)
-    add_executable(${PROJECT_NAME} WIN32 ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
+    add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
 else()
     add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
 endif()

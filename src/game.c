@@ -4,6 +4,7 @@
 #include "core/assets.h"
 #include "core/systems.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 static Entity player;
 static Entity camera;
@@ -23,7 +24,7 @@ void game_init() {
         COMPONENT_VELOCITY |
         COMPONENT_STATS |
         COMPONENT_COLLIDER;
-    position[player] = (vec2){ 64, 144 };
+    position[player] = (vec2){ -20, 400 };
     stats[player].move_speed = 500.0f;
     stats[player].jump_force = 700.0f;
     collider_size[player] = (vec2){ 32, 48 };
@@ -35,7 +36,8 @@ void game_init() {
     position[camera].x = position[player].x + collider_size[player].x * 0.5f;
     position[camera].y = position[player].y + collider_size[player].y * 0.5f;
 
-    for (int i = 0; i < MAX_ENTITIES; i++) {
+    // ai
+    for (int i = 0; i < 30000; i++) {
         Entity bot = create_entity();
         if (bot == INVALID_ENTITY) {
             break;
@@ -76,14 +78,17 @@ void game_update(float dt) {
 
     float cam_targ_x = position[player].x + collider_size[player].x * 0.5f;
     float cam_targ_y = position[player].y + collider_size[player].y * 0.5f;
+
     moving_camera_update(camera, (vec2) { cam_targ_x, cam_targ_y }, dt);
 
+    system_wrap_position();
 }
 
 void game_render(float alpha) {
 
     render_camera_update(camera, alpha);
     system_render(alpha);
+    system_render_map(alpha);
 
 }
 
