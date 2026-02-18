@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAX_ENTITIES    30000
+#define MAX_ENTITIES    256
 #define INVALID_ENTITY ((Entity)-1)
 
-#define MAP_WIDTH       40
-#define MAP_HEIGHT      15
-#define TILE_SIZE       32
+#define MAP_WIDTH       256
+#define MAP_HEIGHT      128
+#define TILE_SIZE       16
 
 #define COLLISION_EPSILON 0.001f
 

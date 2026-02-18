@@ -12,5 +12,6 @@ void *assets_get_texture(SpriteID id);
 void assets_shutdown(void);
 
 bool assets_load_map(const char *filename);
+bool assets_generate_map(uint32_t seed);
 
 #endif

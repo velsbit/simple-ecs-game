@@ -10,12 +10,14 @@ void system_render_map(float alpha) {
     float cam_y = main_camera.y;
 
     int start_x = (int)floorf(cam_x / TILE_SIZE);
-    int start_y = 0;
+    int start_y = (int)floorf(cam_y / TILE_SIZE);
     int end_x = start_x + (main_camera.width / TILE_SIZE) + 2; // +2 для запаса
-    int end_y = MAP_HEIGHT;
-    // int end_y = start_y + (main_camera.height / TILE_SIZE) + 2;
+    // int end_y = MAP_HEIGHT;
+    int end_y = start_y + (main_camera.height / TILE_SIZE) + 2;
 
     for (int y = start_y; y < end_y; y++) {
+        if (y < 0 || y >= MAP_HEIGHT) continue;
+
         for (int x = start_x; x < end_x; x++) {
 
             int wrapped_x = (x % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
@@ -41,6 +43,7 @@ void system_render(float alpha) {
     float cam_h = (float)main_camera.height;
 
     float max_width = (float)(MAP_WIDTH * TILE_SIZE);
+    float max_height = (float)(MAP_HEIGHT * TILE_SIZE);
 
     uint32_t required_mask = COMPONENT_POSITION | COMPONENT_COLLIDER;
 
@@ -57,10 +60,13 @@ void system_render(float alpha) {
 
         // 2. Вычисление экранной позиции с учетом wrap
         float draw_x = world_x - cam_x;
+        float draw_y = world_y - cam_y;
 
         // Корректируем draw_x, чтобы он всегда был в относительной близости к камере
         if (draw_x > max_width - TILE_SIZE)  draw_x -= max_width;
         if (draw_x < -TILE_SIZE) draw_x += max_width;
+        if (draw_y > max_height - TILE_SIZE)  draw_y -= max_height;
+        if (draw_y < -TILE_SIZE) draw_y += max_height;
 
         // 3. CULLING: Рисуем только если объект попадает в экран
         // Добавляем небольшой запас (TILE_SIZE * 2), чтобы спрайты не исчезали мгновенно

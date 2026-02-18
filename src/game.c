@@ -12,7 +12,8 @@ static Entity camera;
 void game_init() {
 
     // --- assets loading ---
-    assets_load_map("tilemap/worldmap.csv");
+    // assets_load_map("tilemap/worldmap.csv");
+    assets_generate_map(100);
 
     // --- entities init ---
 
@@ -24,7 +25,7 @@ void game_init() {
         COMPONENT_VELOCITY |
         COMPONENT_STATS |
         COMPONENT_COLLIDER;
-    position[player] = (vec2){ -20, 400 };
+    position[player] = (vec2){ 0, 0 };
     stats[player].move_speed = 500.0f;
     stats[player].jump_force = 700.0f;
     collider_size[player] = (vec2){ 32, 48 };
@@ -37,7 +38,7 @@ void game_init() {
     position[camera].y = position[player].y + collider_size[player].y * 0.5f;
 
     // ai
-    for (int i = 0; i < 30000; i++) {
+    for (int i = 0; i < 200; i++) {
         Entity bot = create_entity();
         if (bot == INVALID_ENTITY) {
             break;
