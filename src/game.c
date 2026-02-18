@@ -11,9 +11,18 @@ static Entity camera;
 
 void game_init() {
 
-    // --- assets loading ---
-    // assets_load_map("tilemap/worldmap.csv");
-    assets_generate_map(100);
+    int spawn_seed = 3;
+    assets_generate_map(spawn_seed);
+
+    int spawn_tile_x = 10;
+    int spawn_tile_y = 0;
+
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        if (world_map.data[y][spawn_tile_x] != 0) { // 0 - это воздух
+            spawn_tile_y = y;
+            break;
+        }
+    }
 
     // --- entities init ---
 
@@ -25,10 +34,14 @@ void game_init() {
         COMPONENT_VELOCITY |
         COMPONENT_STATS |
         COMPONENT_COLLIDER;
-    position[player] = (vec2){ 0, 0 };
+
+    collider_size[player] = (vec2){ 32, 48 };
+
+    position[player].x = (float)(spawn_tile_x * TILE_SIZE);
+    position[player].y = (float)(spawn_tile_y * TILE_SIZE) - collider_size[player].y;
+
     stats[player].move_speed = 500.0f;
     stats[player].jump_force = 700.0f;
-    collider_size[player] = (vec2){ 32, 48 };
 
     // camera
     camera = create_entity();
@@ -50,7 +63,16 @@ void game_init() {
             COMPONENT_STATS |
             COMPONENT_COLLIDER |
             COMPONENT_COLOR;
-        position[bot] = (vec2){ 128, 144 };
+
+        int bot_x = rand() % MAP_WIDTH;
+        int bot_y = 0;
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            if (world_map.data[y][bot_x] != 0) { bot_y = y; break; }
+        }
+
+        collider_size[bot] = (vec2){ 32, 48 };
+        position[bot] = (vec2){ bot_x * TILE_SIZE, (bot_y * TILE_SIZE) - collider_size[bot].y };
+
         stats[bot].move_speed = 500.0f;
         stats[bot].jump_force = 700.0f;
 
@@ -58,7 +80,6 @@ void game_init() {
         color[bot].g = (float)(rand() % 100) * 0.01f;
         color[bot].b = (float)(rand() % 100) * 0.01f;
         color[bot].a = 1;
-        collider_size[bot] = (vec2){ 32, 48 };
         ai_params[bot].type = AI_RANDOM_MOVEMENT;
     }
 
