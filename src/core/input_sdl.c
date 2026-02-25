@@ -41,5 +41,13 @@ void input_update(bool *running) {
             gInput.mouse_x = e.motion.x;
             gInput.mouse_y = e.motion.y;
         }
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            if (e.button.button == SDL_BUTTON_LEFT)  gInput.mouse_left = true;
+            if (e.button.button == SDL_BUTTON_RIGHT) gInput.mouse_right = true;
+        }
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            if (e.button.button == SDL_BUTTON_LEFT)  gInput.mouse_left = false;
+            if (e.button.button == SDL_BUTTON_RIGHT) gInput.mouse_right = false;
+        }
     }
 }

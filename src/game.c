@@ -8,11 +8,13 @@
 
 static Entity player;
 static Entity camera;
+static SpriteID atlas;
 
 void game_init() {
 
-    int spawn_seed = 3;
+    int spawn_seed = 2;
     assets_generate_map(spawn_seed);
+    atlas = assets_load_texture("sprite/tilemap.png");
 
     int spawn_tile_x = 10;
     int spawn_tile_y = 0;
@@ -37,8 +39,8 @@ void game_init() {
 
     collider_size[player] = (vec2){ 32, 48 };
 
-    position[player].x = (float)(spawn_tile_x * TILE_SIZE);
-    position[player].y = (float)(spawn_tile_y * TILE_SIZE) - collider_size[player].y;
+    position[player].x = (float)(spawn_tile_x * WORLD_TILE_SIZE);
+    position[player].y = (float)(spawn_tile_y * WORLD_TILE_SIZE) - collider_size[player].y;
 
     stats[player].move_speed = 500.0f;
     stats[player].jump_force = 700.0f;
@@ -51,7 +53,7 @@ void game_init() {
     position[camera].y = position[player].y + collider_size[player].y * 0.5f;
 
     // ai
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 100; i++) {
         Entity bot = create_entity();
         if (bot == INVALID_ENTITY) {
             break;
@@ -71,7 +73,7 @@ void game_init() {
         }
 
         collider_size[bot] = (vec2){ 32, 48 };
-        position[bot] = (vec2){ bot_x * TILE_SIZE, (bot_y * TILE_SIZE) - collider_size[bot].y };
+        position[bot] = (vec2){ bot_x * WORLD_TILE_SIZE, (bot_y * WORLD_TILE_SIZE) - collider_size[bot].y };
 
         stats[bot].move_speed = 500.0f;
         stats[bot].jump_force = 700.0f;
@@ -83,6 +85,26 @@ void game_init() {
         ai_params[bot].type = AI_RANDOM_MOVEMENT;
     }
 
+    // --- tree generation ---
+    for (int i = 0; i < 50; i++) {
+        Entity tree = create_entity();
+        if (tree == INVALID_ENTITY) break;
+
+        entity_mask[tree] = COMPONENT_POSITION | COMPONENT_TREE_GEN;
+
+        int tree_x = rand() % MAP_WIDTH;
+        int tree_y = 0;
+        // Ищем поверхность земли
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            if (world_map.data[y][tree_x] != 0) { tree_y = y; break; }
+        }
+
+        position[tree] = (vec2){ (float)tree_x * WORLD_TILE_SIZE, (float)tree_y * WORLD_TILE_SIZE };
+
+        // Эти массивы созданы твоим макросом COMPONENT_STORAGE_LIST
+        seed[tree] = (uint32_t)rand();
+        depth[tree] = 5 + (rand() % 4); // Глубина рекурсии от 4 до 7
+    }
 }
 
 void game_update(float dt) {
@@ -92,6 +114,8 @@ void game_update(float dt) {
     system_player_input();
     system_ai_control(player, dt);
     system_apply_control();
+
+    system_building_update();
 
     system_gravity(dt);
     system_steering(dt);
@@ -109,9 +133,11 @@ void game_update(float dt) {
 void game_render(float alpha) {
 
     render_camera_update(camera, alpha);
+    system_render_trees(alpha);
+    render_map(atlas, 2, alpha);
+    render_map(atlas, 3, alpha);
+    render_map(atlas, 1, alpha);
     system_render(alpha);
-    system_render_map(alpha);
-
 }
 
 void game_shutdown() {

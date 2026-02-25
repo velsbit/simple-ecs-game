@@ -17,6 +17,7 @@ set(SYSTEMS_SRC
     src/systems/movement_platformer.c
     src/systems/camera.c
     src/systems/ai_control.c
+    src/systems/building.c
 )
 
 set(MAIN_SRC

@@ -14,6 +14,8 @@ typedef enum {
 
 typedef struct {
     bool keys[KEY_MAX];
+    bool mouse_left;
+    bool mouse_right;
     float mouse_x;
     float mouse_y;
 } InputState;

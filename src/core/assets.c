@@ -22,7 +22,7 @@ uint32_t assets_load_texture(const char *filename) {
     char full_path[512];
     snprintf(full_path, sizeof(full_path), "%s%s", ASSET_ROOT, filename);
 
-    void *tex = graphics_load_texture(full_path);
+    void *tex = gfx_load_texture(full_path);
 
     if (!tex) {
         fprintf(stderr, "Assets: Failed to load %s\n", full_path);
@@ -41,7 +41,7 @@ void *assets_get_texture(SpriteID id) {
 void assets_shutdown(void) {
     for (uint32_t i = 1; i <= texture_count; i++) {
         if (storage[i]) {
-            graphics_free_texture(storage[i]);
+            gfx_free_texture(storage[i]);
             storage[i] = NULL;
         }
     }
@@ -73,44 +73,61 @@ bool assets_load_map(const char *filename) {
     return true;
 }
 
+#define OCTAVES 4
+#define LACUNARITY 2.0f
+#define PERSISTENCE 0.5f
+
 bool assets_generate_map(uint32_t seed) {
-    // Параметры "гладкости"
-    float frequency = 1.5f; // Количество "волн" на всю длину карты
-    float detail = 0.5f;    // Вторая октава для мелких кочек
-    float amplitude = 6.0f; // Максимальная высота холма
+    // Настройка масштаба: сколько "циклов" шума уложится в ширину карты
+    // Чем меньше значение, тем крупнее и плавнее рельеф
+    const float NOISE_SCALE = 5.0f;
+    const float AMPLITUDE_SCALE = 12.0f;
     int ground_level = MAP_HEIGHT / 2;
 
     for (int x = 0; x < MAP_WIDTH; x++) {
-        // Превращаем X в координаты на круге (u, v)
-        // Радиус круга определяет "масштаб" шума
+        // 1. Переводим X в угол от 0 до 2*PI для бесшовности
         float angle = 2.0f * M_PI * ((float)x / MAP_WIDTH);
-        float u = cosf(angle) * frequency;
-        float v = sinf(angle) * frequency;
 
-        // Генерация высоты через комбинацию u и v
-        // Добавляем seed, чтобы карты были разными
-        float noise = sinf(u + seed) + cosf(v * 2.0f + seed * 0.5f);
+        // 2. Базовые координаты на круге (радиус зависит от масштаба)
+        float base_u = cosf(angle) * NOISE_SCALE;
+        float base_v = sinf(angle) * NOISE_SCALE;
 
-        // Добавляем немного мелких деталей (вторая октава)
-        noise += sinf(u * 3.0f) * detail;
+        float total_noise = 0.0f;
+        float max_amplitude = 0.0f;
+        float freq = 1.0f;
+        float amp = 1.0f;
 
-        int terrain_height = ground_level + (int)(noise * amplitude);
+        // 3. Накладываем слои (октавы)
+        for (int i = 0; i < OCTAVES; i++) {
+            // Смещаем координаты каждой октавы с помощью seed
+            float ux = (base_u * freq) + (float)seed;
+            float vy = (base_v * freq) + (float)seed * 0.7f;
 
-        // Ограничиваем высоту, чтобы не выйти за границы массива
+            // Комбинируем sin/cos от обеих осей для "грязного" шума
+            // Это имитирует 2D шум, закрученный в кольцо
+            float noise_val = sinf(ux) + cosf(vy + ux);
+
+            total_noise += noise_val * amp;
+            max_amplitude += amp;
+
+            freq *= LACUNARITY;
+            amp *= PERSISTENCE;
+        }
+
+        // Нормализация и расчет высоты
+        total_noise /= max_amplitude;
+        int terrain_height = ground_level + (int)(total_noise * AMPLITUDE_SCALE);
+
+        // Clamping
         if (terrain_height < 1) terrain_height = 1;
         if (terrain_height >= MAP_HEIGHT) terrain_height = MAP_HEIGHT - 1;
 
-        // Заполнение столбца
+        // Отрисовка в массив
         for (int y = 0; y < MAP_HEIGHT; y++) {
-            if (y < terrain_height) {
-                world_map.data[y][x] = 0; // Небо
-            }
-            else if (y == terrain_height) {
-                world_map.data[y][x] = 2; // Трава
-            }
-            else {
-                world_map.data[y][x] = 1; // Земля
-            }
+            if (y < terrain_height) world_map.data[y][x] = 0;
+            else if (y == terrain_height) world_map.data[y][x] = 1;
+            else if (y < terrain_height + 7) world_map.data[y][x] = 2;
+            else world_map.data[y][x] = 3;
         }
     }
     return true;

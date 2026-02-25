@@ -109,8 +109,8 @@ bool is_tile_solid(int tx, int ty) {
 }
 
 void get_tile_range(float pos, float size, int *min_idx, int *max_idx) {
-    *min_idx = (int)floorf(pos / TILE_SIZE);
-    *max_idx = (int)floorf((pos + size - COLLISION_EPSILON) / TILE_SIZE);
+    *min_idx = (int)floorf(pos / WORLD_TILE_SIZE);
+    *max_idx = (int)floorf((pos + size - COLLISION_EPSILON) / WORLD_TILE_SIZE);
 }
 
 void system_collision() {
@@ -140,7 +140,7 @@ void system_collision() {
             if (dx > 0) {
                 for (int ty = min_ty; ty <= max_ty; ty++) {
                     if (is_tile_solid(max_tx, ty)) {
-                        curr_x = max_tx * TILE_SIZE - w;
+                        curr_x = max_tx * WORLD_TILE_SIZE - w;
                         dx = 0;
                         velocity[entity].x = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_RIGHT);
@@ -151,7 +151,7 @@ void system_collision() {
             else { // Движение ВЛЕВО
                 for (int ty = min_ty; ty <= max_ty; ty++) {
                     if (is_tile_solid(min_tx, ty)) {
-                        curr_x = (min_tx + 1) * TILE_SIZE;
+                        curr_x = (min_tx + 1) * WORLD_TILE_SIZE;
                         dx = 0;
                         velocity[entity].x = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_LEFT);
@@ -173,7 +173,7 @@ void system_collision() {
             if (dy > 0) {
                 for (int tx = min_tx; tx <= max_tx; tx++) {
                     if (is_tile_solid(tx, max_ty)) {
-                        curr_y = max_ty * TILE_SIZE - h;
+                        curr_y = max_ty * WORLD_TILE_SIZE - h;
                         dy = 0;
                         velocity[entity].y = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_BOTTOM);
@@ -184,7 +184,7 @@ void system_collision() {
             else {
                 for (int tx = min_tx; tx <= max_tx; tx++) {
                     if (is_tile_solid(tx, min_ty)) {
-                        curr_y = (min_ty + 1) * TILE_SIZE;
+                        curr_y = (min_ty + 1) * WORLD_TILE_SIZE;
                         dy = 0;
                         velocity[entity].y = 0;
                         SET_COLLISION(collision_flags[entity], COLLISION_TOP);
@@ -201,7 +201,7 @@ void system_collision() {
 void system_wrap_position() {
     uint32_t required_mask =
         COMPONENT_POSITION;
-    float max_width = (float)(MAP_WIDTH * TILE_SIZE - 1);
+    float max_width = (float)(MAP_WIDTH * WORLD_TILE_SIZE - 1);
 
     for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
         if (!HAS_COMPONENT(entity, required_mask)) continue;

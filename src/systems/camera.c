@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 void moving_camera_update(Entity camera_id, vec2 target_pos, float dt) {
-    float max_width = (float)(MAP_WIDTH * TILE_SIZE);
+    float max_width = (float)(MAP_WIDTH * WORLD_TILE_SIZE);
     float half_width = max_width * 0.5f;
 
     float dx = target_pos.x - position[camera_id].x;

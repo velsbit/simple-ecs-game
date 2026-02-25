@@ -23,11 +23,12 @@ int main(int argc, char *argv[]) {
 
         time_refresh_alpha();
 
-        window_clear(0.1f, 0.1f, 0.15f);
+        window_clear(0.3f, 0.5f, 0.7f);
         game_render(time_get_state()->alpha);
 
+        gfx_batch_flush();
         window_present();
-        time_update_end(1000);
+        time_update_end(120);
     }
 
     assets_shutdown();

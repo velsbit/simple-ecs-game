@@ -7,9 +7,19 @@
 #define MAX_ENTITIES    256
 #define INVALID_ENTITY ((Entity)-1)
 
-#define MAP_WIDTH       256
+#define MAP_WIDTH       1024
 #define MAP_HEIGHT      128
-#define TILE_SIZE       16
+
+// --- ТЕКСТУРНЫЕ ПАРАМЕТРЫ (Pixels in Atlas) ---
+#define AT_SUBTILE_RES      6    // Чистый размер субтайла в пикселях атласа
+#define AT_TILE_STRIDE      12   // Шаг между основными тайлами в атласе
+
+// --- ПАРАМЕТРЫ РЕНДЕРИНГА (Scaling) ---
+#define PIXEL_SCALE         3    // Во сколько раз увеличиваем пиксель атласа на экране
+#define VISUAL_PADDING      2    // На сколько пикселей субтайл "вылезает" за логическую сетку (в атласе)
+
+// --- ЛОГИЧЕСКИЕ ПАРАМЕТРЫ (Game World) ---
+#define WORLD_TILE_SIZE     24   // Размер клетки в игре (для коллизий и сетки)
 
 #define COLLISION_EPSILON 0.001f
 
@@ -47,16 +57,26 @@ typedef struct {
     float a;
 } Color;
 
+typedef struct {
+    uint32_t seed;           // Зерно для генерации
+    float trunk_height;      // Высота ствола
+    float trunk_width;       // Толщина ствола
+    int branches;            // Количество основных веток
+    float branch_length_mul; // Множитель длины веток
+    Color trunk_color;       // Цвет ствола
+    Color foliage_color;     // Цвет листвы
+} TreeParams;
 
 #define COMPONENT_TYPES_LIST(X) \
-    X(POSITION)       \
-    X(VELOCITY)       \
-    X(SPRITE)         \
-    X(STATS)          \
-    X(COLLIDER)       \
-    X(PLAYER_CONTROL) \
-    X(AI_CONTROL)     \
-    X(COLOR)
+    X(POSITION)         \
+    X(VELOCITY)         \
+    X(SPRITE)           \
+    X(STATS)            \
+    X(COLLIDER)         \
+    X(PLAYER_CONTROL)   \
+    X(AI_CONTROL)       \
+    X(COLOR)            \
+    X(TREE_GEN)
 
 #define COMPONENT_STORAGE_LIST(X) \
     X(POSITION,       vec2,         position)           \
@@ -70,15 +90,19 @@ typedef struct {
     X(AI_CONTROL,     uint8_t,      control_flags)      \
     X(AI_CONTROL,     AIParams,     ai_params)          \
     X(STATS,          Stats,        stats)              \
-    X(COLOR,          Color,        color)
+    X(COLOR,          Color,        color)              \
+    X(TREE_PARAMS, uint32_t, seed)                      \
+    X(TREE_PARAMS, uint8_t,  depth)          
 
 typedef struct {
     float x, y;
     int width, height;
 } Camera;
 
+
 typedef struct {
     uint8_t data[MAP_HEIGHT][MAP_WIDTH];
+    uint8_t mask[MAP_HEIGHT][MAP_WIDTH];
 } Tilemap;
 
 extern Camera  main_camera;
