@@ -13,16 +13,25 @@ set(CORE_SRC
 )
 
 set(SYSTEMS_SRC
-    src/systems/render.c
-    src/systems/movement_platformer.c
-    src/systems/camera.c
-    src/systems/ai_control.c
+    src/systems/kinematics.c
+    src/systems/moving_camera.c
+    src/systems/player_control.c
+    # src/systems/ai_control.c
     src/systems/building.c
+    src/systems/control_apply.c
+    src/systems/collider.c
+)
+
+set(RENDERER_SRC
+    src/renderer/camera_view.c
+    src/renderer/entity_renderer.c
+    src/renderer/map_renderer.c
 )
 
 set(MAIN_SRC
     src/main.c
     src/game.c
+    src/world.c
 )
 
 include_directories(include)
@@ -31,13 +40,13 @@ add_subdirectory(extensions/SDL)
 add_subdirectory(extensions/SDL_image)
 
 if(APPLE)
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${CORE_SRC} ${SYSTEMS_SRC} ${RENDERER_SRC} ${MAIN_SRC})
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.lunadecay.mygame"
         MACOSX_BUNDLE_BUNDLE_NAME "MyGame"
     )
 else()
-    add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${MAIN_SRC})
+    add_executable(${PROJECT_NAME} ${CORE_SRC} ${SYSTEMS_SRC} ${RENDERER_SRC} ${MAIN_SRC})
     if(WIN32)
         set_target_properties(${PROJECT_NAME} PROPERTIES 
             WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>

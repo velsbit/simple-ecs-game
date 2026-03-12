@@ -1,31 +1,34 @@
-#include "core/systems.h"
+#include "systems/building.h"
+#include "renderer/camera_view.h"
 #include "core/input.h"
-#include "core/ecs.h"
-#include "core/graphics.h"
+#include "world.h"
 #include <math.h>
 
-void system_building_update() {
+void sys_building_update() {
     InputState *input = input_get_state();
 
-    // Мировые координаты с учетом камеры
-    float world_x = input->mouse_x + main_camera.x;
-    float world_y = input->mouse_y + main_camera.y;
+    float world_x = input->mouse_x + s_cam_pos.x;
+    float world_y = input->mouse_y + s_cam_pos.y;
 
-    // Горизонтальный wrap
-    float wrapped_x = fmodf(world_x, (float)(WORLD_TILE_SIZE * MAP_WIDTH));
-    if (wrapped_x < 0) wrapped_x += (float)(WORLD_TILE_SIZE * MAP_WIDTH);
+    float tile_size = (float)world_get_tile_size();
+    int world_w = world_get_width();
+    int world_h = world_get_height();
 
-    int tile_x = (int)floorf(wrapped_x / WORLD_TILE_SIZE);
-    int tile_y = (int)floorf(world_y / WORLD_TILE_SIZE);
+    int tile_x = (int)floorf(world_x / tile_size);
+    int tile_y = (int)floorf(world_y / tile_size);
 
-    if (tile_y < 0 || tile_y >= MAP_HEIGHT) return;
-    tile_x = (tile_x % MAP_WIDTH + MAP_WIDTH) % MAP_WIDTH;
+    tile_x = (tile_x % world_w + world_w) % world_w;
 
-    // Просто проверяем флаги из структуры gInput
+    if (tile_y < 0 || tile_y >= world_h) return;
+
     if (input->mouse_left) {
-        world_map.data[tile_y][tile_x] = 2;
+        if (world_get_tile(tile_x, tile_y) != 2) {
+            world_set_tile(tile_x, tile_y, 2);
+        }
     }
     else if (input->mouse_right) {
-        world_map.data[tile_y][tile_x] = 0;
+        if (world_get_tile(tile_x, tile_y) != 0) {
+            world_set_tile(tile_x, tile_y, 0);
+        }
     }
 }

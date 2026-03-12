@@ -15,10 +15,11 @@ int main(int argc, char *argv[]) {
     bool running = true;
     while (running) {
         time_update_start();
-        input_update(&running);
+        input_poll_events(&running);
 
         while (time_should_do_fixed_step()) {
             game_update(time_get_state()->fixed_dt);
+            input_update_fixed();
         }
 
         time_refresh_alpha();
@@ -28,7 +29,7 @@ int main(int argc, char *argv[]) {
 
         gfx_batch_flush();
         window_present();
-        time_update_end(120);
+        time_update_end(240);
     }
 
     assets_shutdown();

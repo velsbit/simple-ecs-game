@@ -110,27 +110,31 @@ void gfx_draw_point(float x, float y, float r, float g, float b, float a) {
 static SDL_Vertex gVertexStack[MAX_VERTICES];
 static int gVertexCount = 0;
 
+static float g_cached_tw = 1.0f;
+static float g_cached_th = 1.0f;
+
 void gfx_batch_begin(void *texture) {
     SDL_Texture *tex = (SDL_Texture *)texture;
 
     if (gCurrentBatchTexture != tex) {
         gfx_batch_flush();
         gCurrentBatchTexture = tex;
+        if (tex) {
+            // Узнаем размер ОДИН РАЗ при смене текстуры
+            SDL_GetTextureSize(tex, &g_cached_tw, &g_cached_th);
+        }
     }
 }
 
 void gfx_batch_draw(float dx, float dy, float dw, float dh,
     float sx, float sy, float sw, float sh) {
-    if (!gCurrentBatchTexture) return;
+
     if (gVertexCount + 6 > MAX_VERTICES) gfx_batch_flush();
 
-    float tw, th;
-    SDL_GetTextureSize(gCurrentBatchTexture, &tw, &th);
-
-    float u1 = sx / tw;
-    float v1 = sy / th;
-    float u2 = (sx + sw) / tw;
-    float v2 = (sy + sh) / th;
+    float u1 = sx / g_cached_tw;
+    float v1 = sy / g_cached_th;
+    float u2 = (sx + sw) / g_cached_tw;
+    float v2 = (sy + sh) / g_cached_th;
 
     SDL_Vertex *v = &gVertexStack[gVertexCount];
 

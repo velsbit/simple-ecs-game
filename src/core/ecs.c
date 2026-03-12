@@ -1,29 +1,27 @@
 // core/ecs.c
 #include <string.h>
+#include <assert.h>
 #include "core/ecs.h"
 
-#define X(mask, type, array) type array[MAX_ENTITIES];
-COMPONENT_STORAGE_LIST(X);
+#define X(mask, type, name) type g_##name[MAX_ENTITIES];
+COMPONENT_STORAGE_LIST(X)
 #undef X
 
-ComponentMask entity_mask[MAX_ENTITIES];
+ComponentMask g_entity_mask[MAX_ENTITIES];
 
 static Entity free_entities[MAX_ENTITIES];
 static int    free_count = 0;
 
-Tilemap world_map;
-Camera  main_camera = { 0.0f, 0.0f, 800, 600 };
-
 static void clear_entity_data(Entity e) {
-#define X(mask, type, array) memset(&array[e], 0, sizeof(type));
+#define X(mask, type, name) memset(&g_##name[e], 0, sizeof(type));
     COMPONENT_STORAGE_LIST(X);
 #undef X
 }
 
 void ecs_init(void) {
-    memset(entity_mask, 0, sizeof(entity_mask));
+    memset(g_entity_mask, 0, sizeof(g_entity_mask));
 
-#define X(mask, type, array) memset(array, 0, sizeof(array));
+#define X(mask, type, name) memset(g_##name, 0, sizeof(g_##name));
     COMPONENT_STORAGE_LIST(X);
 #undef X
 
@@ -35,23 +33,24 @@ void ecs_init(void) {
 
 Entity create_entity(void) {
     if (free_count <= 0) {
+        assert(false && "ECS: Out of entities!");
         return (Entity)-1;
     }
 
     Entity e = free_entities[--free_count];
 
-    entity_mask[e] = COMPONENT_NONE;
+    g_entity_mask[e] = COMPONENT_NONE;
     clear_entity_data(e);
 
     return e;
 }
 
 void destroy_entity(Entity e) {
-    if (e >= MAX_ENTITIES || entity_mask[e] == COMPONENT_NONE) {
+    if (e >= MAX_ENTITIES || g_entity_mask[e] == COMPONENT_NONE) {
         return;
     }
 
-    entity_mask[e] = COMPONENT_NONE;
+    g_entity_mask[e] = COMPONENT_NONE;
 
     clear_entity_data(e);
 

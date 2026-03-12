@@ -1,143 +1,105 @@
 // game.c
 #include "game.h"
+
 #include "core/ecs.h"
 #include "core/assets.h"
-#include "core/systems.h"
+
+#include "renderer/camera_view.h"
+#include "renderer/entity_renderer.h"
+#include "renderer/map_renderer.h"
+
+#include "systems/moving_camera.h"
+#include "systems/building.h"
+#include "systems/kinematics.h"
+#include "systems/player_control.h"
+#include "systems/control_apply.h"
+#include "systems/collider.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
 static Entity player;
 static Entity camera;
 static SpriteID atlas;
+static MapTileset tileset_conf;
+static WorldConfig world = { 256, 256, 24 }; // w, h, tile_size
 
 void game_init() {
 
     int spawn_seed = 2;
-    assets_generate_map(spawn_seed);
     atlas = assets_load_texture("sprite/tilemap.png");
+    tileset_conf = (MapTileset){ atlas, 3, 2, 12, 6 };
+    world_init(world);
+    world_generate_procedural(spawn_seed);
 
     int spawn_tile_x = 10;
-    int spawn_tile_y = 0;
+    int spawn_tile_y = world_get_first_empty_tile_y(spawn_tile_x);
 
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        if (world_map.data[y][spawn_tile_x] != 0) { // 0 - это воздух
-            spawn_tile_y = y;
-            break;
-        }
-    }
-
-    // --- entities init ---
-
-    // player
-    player = create_entity();
-    entity_mask[player] =
-        COMPONENT_PLAYER_CONTROL |
-        COMPONENT_POSITION |
-        COMPONENT_VELOCITY |
-        COMPONENT_STATS |
-        COMPONENT_COLLIDER;
-
-    collider_size[player] = (vec2){ 32, 48 };
-
-    position[player].x = (float)(spawn_tile_x * WORLD_TILE_SIZE);
-    position[player].y = (float)(spawn_tile_y * WORLD_TILE_SIZE) - collider_size[player].y;
-
-    stats[player].move_speed = 500.0f;
-    stats[player].jump_force = 700.0f;
-
-    // camera
     camera = create_entity();
-    entity_mask[camera] =
-        COMPONENT_POSITION;
-    position[camera].x = position[player].x + collider_size[player].x * 0.5f;
-    position[camera].y = position[player].y + collider_size[player].y * 0.5f;
+    g_entity_mask[camera] =
+        COMPONENT_POSITION | COMPONENT_CAMERA;
 
-    // ai
-    for (int i = 0; i < 100; i++) {
-        Entity bot = create_entity();
-        if (bot == INVALID_ENTITY) {
-            break;
-        }
-        entity_mask[bot] =
-            COMPONENT_AI_CONTROL |
-            COMPONENT_POSITION |
-            COMPONENT_VELOCITY |
-            COMPONENT_STATS |
-            COMPONENT_COLLIDER |
-            COMPONENT_COLOR;
+    player = create_entity();
+    g_entity_mask[player] =
+        COMPONENT_POSITION | COMPONENT_VELOCITY |
+        COMPONENT_GRAVITY | COMPONENT_COLLIDER |
+        COMPONENT_MOVE | COMPONENT_JUMP |
+        COMPONENT_CONTROL | COMPONENT_PLAYER;
 
-        int bot_x = rand() % MAP_WIDTH;
-        int bot_y = 0;
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            if (world_map.data[y][bot_x] != 0) { bot_y = y; break; }
-        }
+    g_position[player] = (vec2){
+        (spawn_tile_x - 1) * world.tile_size,
+        (spawn_tile_y - 1) * world.tile_size
+    };
+    g_prev_position[player] = g_position[player];
 
-        collider_size[bot] = (vec2){ 32, 48 };
-        position[bot] = (vec2){ bot_x * WORLD_TILE_SIZE, (bot_y * WORLD_TILE_SIZE) - collider_size[bot].y };
+    g_velocity[player] = (vec2){ 0, 0 };
+    g_velocity_target[player] = (vec2){ 0, 0 };
 
-        stats[bot].move_speed = 500.0f;
-        stats[bot].jump_force = 700.0f;
+    g_move_speed_base[player] = 400.0f;
+    g_move_speed_current[player] = 400.0f;
 
-        color[bot].r = (float)(rand() % 100) * 0.01f;
-        color[bot].g = (float)(rand() % 100) * 0.01f;
-        color[bot].b = (float)(rand() % 100) * 0.01f;
-        color[bot].a = 1;
-        ai_params[bot].type = AI_RANDOM_MOVEMENT;
-    }
+    g_jump_force_base[player] = 800.0f;
+    g_jump_force_current[player] = 800.0f;
 
-    // --- tree generation ---
-    for (int i = 0; i < 50; i++) {
-        Entity tree = create_entity();
-        if (tree == INVALID_ENTITY) break;
+    g_gravity_base[player] = 2000.0f;
+    g_gravity_current[player] = 2000.0f;
 
-        entity_mask[tree] = COMPONENT_POSITION | COMPONENT_TREE_GEN;
+    g_collider_size[player] = (vec2){ 32, 64 };
+    g_collision_flags[player] = 0;
 
-        int tree_x = rand() % MAP_WIDTH;
-        int tree_y = 0;
-        // Ищем поверхность земли
-        for (int y = 0; y < MAP_HEIGHT; y++) {
-            if (world_map.data[y][tree_x] != 0) { tree_y = y; break; }
-        }
+    g_control_flags[player] = 0;
 
-        position[tree] = (vec2){ (float)tree_x * WORLD_TILE_SIZE, (float)tree_y * WORLD_TILE_SIZE };
-
-        // Эти массивы созданы твоим макросом COMPONENT_STORAGE_LIST
-        seed[tree] = (uint32_t)rand();
-        depth[tree] = 5 + (rand() % 4); // Глубина рекурсии от 4 до 7
-    }
+    g_position[camera].x = g_position[player].x;
+    g_position[camera].y = g_position[player].y;
 }
 
 void game_update(float dt) {
 
-    system_update_prev_positions();
+    sys_update_prev_positions();
 
-    system_player_input();
-    system_ai_control(player, dt);
-    system_apply_control();
+    sys_player_control_update();
+    sys_control_apply(dt);
 
-    system_building_update();
+    sys_gravity(dt);
+    sys_steering(dt);
 
-    system_gravity(dt);
-    system_steering(dt);
-    system_position_update(dt);
-    system_collision();
+    sys_building_update();
 
-    float cam_targ_x = position[player].x + collider_size[player].x * 0.5f;
-    float cam_targ_y = position[player].y + collider_size[player].y * 0.5f;
+    moving_camera_update(camera, g_position[player], dt);
 
-    moving_camera_update(camera, (vec2) { cam_targ_x, cam_targ_y }, dt);
+    sys_position_update(dt);
 
-    system_wrap_position();
+    sys_collision(dt);
+
 }
 
 void game_render(float alpha) {
 
     render_camera_update(camera, alpha);
-    system_render_trees(alpha);
-    render_map(atlas, 2, alpha);
-    render_map(atlas, 3, alpha);
-    render_map(atlas, 1, alpha);
-    system_render(alpha);
+    render_map(&tileset_conf, 2);
+    render_map(&tileset_conf, 3);
+    render_map(&tileset_conf, 1);
+    system_entities_render(alpha);
 }
 
 void game_shutdown() {
