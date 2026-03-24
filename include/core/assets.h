@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t SpriteID;
+typedef uint32_t TextureID;
 
 void assets_init(void);
-SpriteID assets_load_texture(const char *filename);
-void *assets_get_texture(SpriteID id);
+TextureID assets_load_texture(const char *filename);
+void *assets_get_texture(TextureID id);
 void assets_shutdown(void);
 
 bool assets_load_map(const char *filename);

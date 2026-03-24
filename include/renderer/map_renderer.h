@@ -5,10 +5,10 @@
 #include "core/assets.h"
 
 typedef struct {
-    SpriteID atlas_id;
+    TextureID atlas_id;
     float pixel_scale;
     float visual_padding;
-    // Параметры атласа (stride, res и т.д.)
+
     int tile_stride;
     int subtile_res;
 } MapTileset;

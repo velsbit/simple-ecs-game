@@ -1,6 +1,6 @@
-[submodule "extensions/SDL"]
-	path = extensions/SDL
+[submodule "external/SDL"]
+	path = external/SDL
 	url = https://github.com/libsdl-org/SDL.git
-[submodule "extensions/SDL_image"]
-	path = extensions/SDL_image
+[submodule "external/SDL_image"]
+	path = external/SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git

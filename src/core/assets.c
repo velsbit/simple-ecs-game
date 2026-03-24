@@ -33,7 +33,7 @@ uint32_t assets_load_texture(const char *filename) {
     return texture_count;
 }
 
-void *assets_get_texture(SpriteID id) {
+void *assets_get_texture(TextureID id) {
     if (id == 0 || id > texture_count) return NULL;
     return storage[id];
 }

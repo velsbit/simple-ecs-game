@@ -20,7 +20,7 @@
 
 static Entity player;
 static Entity camera;
-static SpriteID atlas;
+static TextureID atlas;
 static MapTileset tileset_conf;
 static WorldConfig world = { 256, 256, 24 }; // w, h, tile_size
 

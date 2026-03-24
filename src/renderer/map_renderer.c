@@ -82,7 +82,7 @@ void render_map(const MapTileset *restrict tileset, uint8_t target_type) {
                 // uint32_t hash = (uint32_t)(x * 73856093 ^ y * 19349663) % MAP_WIDTH;
                 // float variation = 0.9f + (float)(hash % 20) / 100.0f;
 
-                float variation = 0.8f + (float)(pattern[(x + y) & 3] * 10) / 100.0f;
+                float variation = 0.8f + (float)(pattern[(x ^ y) & 3] * 10) / 100.0f;
 
                 gfx_set_color(variation, variation, variation, 1);
 

@@ -4,6 +4,7 @@ project(MyGame)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
 
+# Список исходных файлов
 set(CORE_SRC
     src/core/graphics_sdl.c
     src/core/time_sdl.c
@@ -16,7 +17,6 @@ set(SYSTEMS_SRC
     src/systems/kinematics.c
     src/systems/moving_camera.c
     src/systems/player_control.c
-    # src/systems/ai_control.c
     src/systems/building.c
     src/systems/control_apply.c
     src/systems/collider.c
@@ -36,8 +36,8 @@ set(MAIN_SRC
 
 include_directories(include)
 
-add_subdirectory(extensions/SDL)
-add_subdirectory(extensions/SDL_image)
+add_subdirectory(external/SDL)
+add_subdirectory(external/SDL_image)
 
 if(APPLE)
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${CORE_SRC} ${SYSTEMS_SRC} ${RENDERER_SRC} ${MAIN_SRC})
@@ -59,6 +59,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3::SDL3
     SDL3_image::SDL3_image
+    m
 )
 
 if(APPLE)
@@ -70,13 +71,14 @@ if(APPLE)
 elseif(WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE 
         $<$<CONFIG:Debug>:ASSET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/assets/">
-        $<$<CONFIG:Release>:ASSET_ROOT="assets/">
+        $<$<NOT:$<CONFIG:Debug>>:ASSET_ROOT="assets/">
     )
 else()
-    target_compile_definitions(${PROJECT_NAME} PRIVATE 
-        $<$<CONFIG:Debug>:ASSET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/assets/">
-        $<$<CONFIG:Release>:ASSET_ROOT="./assets/">
-    )
+    if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE ASSET_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/assets/")
+    else()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE ASSET_ROOT="./assets/")
+    endif()
 endif()
 
 if(WIN32)

@@ -1,5 +1,4 @@
 #include <math.h>
-#include "core/systems.h"
 #include "core/ecs.h"
 #include "world.h"
 #include <stdio.h>
