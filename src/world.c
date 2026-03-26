@@ -74,7 +74,7 @@ void world_generate_procedural(uint32_t seed) {
     int ground_level = world_config.height / 2;
 
     for (int x = 0; x < world_config.width; x++) {
-        float angle = 2.0f * M_PI * ((float)x / world_config.width);
+        float angle = 2.0f * (float)M_PI * ((float)x / world_config.width);
 
         float base_u = cosf(angle) * NOISE_SCALE;
         float base_v = sinf(angle) * NOISE_SCALE;

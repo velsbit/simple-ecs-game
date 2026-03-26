@@ -36,6 +36,18 @@ set(MAIN_SRC
 
 include_directories(include)
 
+set(SDLIMAGE_VENDORED ON CACHE BOOL "" FORCE)
+
+set(SDLIMAGE_AVIF OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_TIF  OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_WEBP OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_JXL  OFF CACHE BOOL "" FORCE)
+set(SDLIMAGE_SVG  OFF CACHE BOOL "" FORCE) 
+
+if(MSVC)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_WARNINGS)
+endif()
+
 add_subdirectory(external/SDL)
 add_subdirectory(external/SDL_image)
 
@@ -51,6 +63,9 @@ else()
         set_target_properties(${PROJECT_NAME} PROPERTIES 
             WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>
         )
+        target_link_options(${PROJECT_NAME} PRIVATE 
+        $<$<NOT:$<CONFIG:Debug>>:/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup>
+    )
     endif()
 endif()
 
@@ -59,8 +74,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3::SDL3
     SDL3_image::SDL3_image
-    m
 )
+
+if(NOT MSVC)
+    target_link_libraries(${PROJECT_NAME} PRIVATE m)
+endif()
 
 if(APPLE)
     file(GLOB ASSETS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")

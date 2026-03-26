@@ -47,8 +47,8 @@ void game_init() {
         COMPONENT_CONTROL | COMPONENT_PLAYER;
 
     g_position[player] = (vec2){
-        (spawn_tile_x - 1) * world.tile_size,
-        (spawn_tile_y - 1) * world.tile_size
+        (spawn_tile_x - 1) * (float)world.tile_size,
+        (spawn_tile_y - 1) * (float)world.tile_size
     };
     g_prev_position[player] = g_position[player];
 
